@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TanyaLokal - Asisten Pintar Offline</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(180deg, #ffe6ec 0%, #fff4f6 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      transition: background 0.5s ease-in-out;
+    }
+
+    .chat-container {
+      width: 100%;
+      max-width: 800px;
+      height: 90vh;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 20px;
+      box-shadow: 0 20px 40px rgba(255, 182, 193, 0.3);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border: 1px solid rgba(255, 192, 203, 0.5);
+    }
+
+    .chat-header {
+      background: linear-gradient(135deg, #ff6b9d 0%, #c44569 100%);
+      color: white;
+      padding: 25px;
+      text-align: center;
+      position: relative;
+    }
+
+    .chat-header h1 {
+      font-size: 28px;
+      margin-bottom: 5px;
+    }
+
+    .chat-header p {
+      font-size: 14px;
+      opacity: 0.95;
+    }
+
+    .status-indicator {
+      position: absolute;
+      top: 25px;
+      right: 25px;
+      width: 12px;
+      height: 12px;
+      background: #fff;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.1); opacity: 0.7; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      background: linear-gradient(135deg, #fff5f5 0%, #ffe4e6 100%);
+    }
+
+    .message {
+      margin-bottom: 15px;
+      animation: slideIn 0.4s ease;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .message.user {
+      text-align: right;
+    }
+
+    .message.bot {
+      text-align: left;
+      display: flex;
+      align-items: flex-start;
+    }
+
+    .message-content {
+      display: inline-block;
+      padding: 15px 20px;
+      border-radius: 20px;
+      max-width: 70%;
+      word-wrap: break-word;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .message.user .message-content {
+      background: linear-gradient(135deg, #ff8a80 0%, #ff5722 100%);
+      color: white;
+      border-bottom-right-radius: 5px;
+    }
+
+    .message.bot .message-content {
+      background: white;
+      color: #333;
+      border: 1px solid #f8bbd9;
+      border-bottom-left-radius: 5px;
+      box-shadow: 0 2px 8px rgba(255, 182, 193, 0.2);
+      margin-left: 10px;
+    }
+
+    .bot-avatar {
+      width: 30px;
+      height: 30px;
+      background: linear-gradient(135deg, #ff6b9d 0%, #c44569 100%);
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      color: white;
+    }
+
+    .typing-indicator {
+      display: none;
+      text-align: left;
+      margin-bottom: 15px;
+    }
+
+    .typing-indicator .message-content {
+      background: white;
+      border: 1px solid #f8bbd9;
+      padding: 15px 20px;
+    }
+
+    .dots span {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #ff6b9d;
+      margin: 0 2px;
+      animation: typing 1.4s infinite;
+    }
+
+    .dots span:nth-child(2) { animation-delay: 0.2s; }
+    .dots span:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes typing {
+      0%, 60%, 100% { transform: translateY(0); }
+      30% { transform: translateY(-10px); }
+    }
+
+    .chat-input {
+      padding: 20px;
+      background: white;
+      border-top: 1px solid #f8bbd9;
+    }
+
+    .input-container {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .input-container input {
+      flex: 1;
+      padding: 15px 20px;
+      border: 2px solid #f8bbd9;
+      border-radius: 25px;
+      font-size: 16px;
+      outline: none;
+    }
+
+    .send-btn {
+      padding: 15px 25px;
+      background: linear-gradient(135deg, #ff6b9d 0%, #c44569 100%);
+      color: white;
+      border: none;
+      border-radius: 25px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .suggestions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 15px;
+      justify-content: center;
+    }
+
+    .suggestion-btn {
+      padding: 10px 16px;
+      background: rgba(255, 107, 157, 0.1);
+      border: 1px solid rgba(255, 107, 157, 0.3);
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 14px;
+      color: #c44569;
+      transition: all 0.3s;
+    }
+
+    .suggestion-btn:hover {
+      background: rgba(255, 107, 157, 0.2);
+      transform: translateY(-2px);
+    }
+
+    .welcome-message {
+      text-align: center;
+      color: #666;
+      padding: 20px;
+      font-style: italic;
+    }
+
+    @media (max-width: 600px) {
+      .chat-container {
+        width: 100%;
+        height: 100vh;
+        border-radius: 0;
+      }
+
+      .message-content {
+        max-width: 85%;
+      }
+
+      .chat-header h1 {
+        font-size: 22px;
+      }
+    }
+  </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <div class="status-indicator"></div>
+            <h1>💖 TanyaLokal</h1>
+            <p>“Asisten pintar, selalu siap — bahkan tanpa internet.”</p>
+        </div>
+
+       <div class="chat-messages" id="chatMessages">
+    <div class="welcome-message">
+        <p>🌟 Halo! Saya <strong>TanyaLokal</strong>, asisten pintar yang siap membantu menjawab pertanyaan umum kamu. Tanyakan apa saja — tanpa perlu internet!</p>
+        <div class="suggestions">
+            <div class="suggestion-btn" onclick="sendSuggestion('Apa itu cuaca hujan?')">🌧️ Cuaca</div>
+            <div class="suggestion-btn" onclick="sendSuggestion('Bagaimana cara hidup sehat?')">🏃‍♀️ Kesehatan</div>
+            <div class="suggestion-btn" onclick="sendSuggestion('Jelaskan tentang teknologi AI')">🤖 Teknologi</div>
+            <div class="suggestion-btn" onclick="sendSuggestion('Tips belajar yang efektif')">📚 Pendidikan</div>
+            <div class="suggestion-btn" onclick="sendSuggestion('Resep makanan sederhana')">🍳 Kuliner</div>
+        </div>
+    </div>
+</div>
+
+        <div class="typing-indicator" id="typingIndicator">
+            <div class="bot-avatar">🤖</div>
+            <div class="message-content">
+                <div class="dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+                <span style="margin-left: 8px;">Bot sedang mengetik...</span>
+            </div>
+        </div>
+
+        <div class="chat-input">
+            <div class="input-container">
+                <input type="text" id="messageInput" placeholder="Tanyakan sesuatu..." onkeypress="handleKeyPress(event)">
+                <button class="send-btn" id="sendBtn" onclick="sendMessage()">Kirim</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let conversationHistory = [];
+        const OLLAMA_API_URL = 'http://localhost:11434/api/generate';
+        const MODEL_NAME = 'mistral:latest';
+
+        function addMessage(content, isUser = false) {
+            const messagesContainer = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user' : 'bot'}`;
+            
+            if (!isUser) {
+                const avatar = document.createElement('div');
+                avatar.className = 'bot-avatar';
+                avatar.innerHTML = '🤖';
+                messageDiv.appendChild(avatar);
+            }
+            
+            const messageContent = document.createElement('div');
+            messageContent.className = 'message-content';
+            messageContent.innerHTML = content;
+            
+            messageDiv.appendChild(messageContent);
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function showTypingIndicator() {
+            document.getElementById('typingIndicator').style.display = 'flex';
+            document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight;
+        }
+
+        function hideTypingIndicator() {
+            document.getElementById('typingIndicator').style.display = 'none';
+        }
+
+        function showError(message) {
+            const messagesContainer = document.getElementById('chatMessages');
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'message bot';
+            errorDiv.style.color = '#e91e63';
+            errorDiv.innerHTML = `<div class="bot-avatar">❌</div><div class="message-content" style="border-color: #e91e63; background: #fce4ec;">${message}</div>`;
+            messagesContainer.appendChild(errorDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        async function sendToOllama(prompt) {
+            try {
+                const response = await fetch(OLLAMA_API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        model: MODEL_NAME,
+                        prompt: `Kamu adalah asisten AI yang ramah dan membantu menjawab pertanyaan umum dalam bahasa Indonesia. Berikan jawaban yang informatif, mudah dipahami, dan bermanfaat untuk kehidupan sehari-hari. Fokus pada topik seperti kesehatan, pendidikan, teknologi, kuliner, dan informasi umum lainnya. Gunakan bahasa yang santai dan ramah.
+
+Pertanyaan: ${prompt}
+
+Jawaban:`,
+                        stream: false,
+                        options: {
+                            temperature: 0.7,
+                            top_p: 0.9,
+                            max_tokens: 500
+                        }
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                return data.response;
+            } catch (error) {
+                console.error('Error calling Ollama:', error);
+                throw error;
+            }
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const sendBtn = document.getElementById('sendBtn');
+            const message = input.value.trim();
+            
+            if (!message) return;
+
+            // Disable input and button
+            input.disabled = true;
+            sendBtn.disabled = true;
+            
+            // Add user message
+            addMessage(message, true);
+            
+            // Clear input
+            input.value = '';
+            
+            // Show typing indicator
+            showTypingIndicator();
+            
+            // Send to Ollama
+            sendToOllama(message)
+                .then(response => {
+                    // Hide typing indicator
+                    hideTypingIndicator();
+                    
+                    // Add bot response
+                    addMessage(response.replace(/\n/g, '<br>'));
+                    
+                    // Add to conversation history
+                    conversationHistory.push({
+                        user: message,
+                        bot: response
+                    });
+                })
+                .catch(error => {
+                    hideTypingIndicator();
+                    console.error('Error:', error);
+                    
+                    let errorMessage = 'Maaf, terjadi kesalahan saat menghubungi server. ';
+                    
+                    if (error.message.includes('Failed to fetch')) {
+                        errorMessage += 'Pastikan Ollama berjalan di http://localhost:11434 dan model qwen3:latest telah diunduh.';
+                    } else if (error.message.includes('HTTP error')) {
+                        errorMessage += 'Server memberikan respons error. Periksa log Ollama untuk detail.';
+                    } else {
+                        errorMessage += 'Silakan coba lagi nanti.';
+                    }
+                    
+                    showError(errorMessage);
+                })
+                .finally(() => {
+                    // Re-enable input and button
+                    input.disabled = false;
+                    sendBtn.disabled = false;
+                    input.focus();
+                });
+        }
+
+        function sendSuggestion(suggestion) {
+            document.getElementById('messageInput').value = suggestion;
+            sendMessage();
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('messageInput').focus();
+            
+            // Test Ollama connection
+            checkOllamaConnection();
+        });
+
+        async function checkOllamaConnection() {
+            try {
+                const response = await fetch('http://localhost:11434/api/tags');
+                if (response.ok) {
+                    console.log('✅ Ollama connection successful');
+                    document.querySelector('.status-indicator').style.background = '#4CAF50';
+                } else {
+                    console.warn('⚠️ Ollama connection failed');
+                    document.querySelector('.status-indicator').style.background = '#ff9800';
+                }
+            } catch (error) {
+                console.warn('❌ Cannot connect to Ollama:', error);
+                document.querySelector('.status-indicator').style.background = '#f44336';
+            }
+        }
+    </script>
+</body>
+</html>
